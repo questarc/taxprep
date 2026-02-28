@@ -3,7 +3,7 @@ from datetime import date
 from ui.layout import setup_page
 from core.models import IncomeStatement, IncomeStatementLine, BusinessProfile
 from data.storage import save_model, load_model
-
+from data.pdf_export import income_statement_pdf
 def _ensure_profile() -> BusinessProfile | None:
     profile = st.session_state.get("business_profile")
     if not profile:
@@ -60,6 +60,17 @@ def main():
         save_model("income_statement", is_stmt)
         st.session_state["income_statement"] = is_stmt
         st.success(f"Income statement saved. Net income: {is_stmt.net_income:,.2f}")
+    from data.pdf_export import income_statement_pdf
+
+    if existing or "income_statement" in st.session_state:
+        is_obj = existing or st.session_state["income_statement"]
+        pdf_bytes = income_statement_pdf(is_obj)
+        st.download_button(
+            "Download Income Statement PDF",
+            data=pdf_bytes,
+            file_name=f"{is_obj.business.legal_name.lower().replace(' ', '_')}_income_statement.pdf",
+            mime="application/pdf",
+        )
 
 if __name__ == "__main__":
     main()
