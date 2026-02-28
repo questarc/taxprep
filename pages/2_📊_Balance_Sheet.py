@@ -3,6 +3,7 @@ from datetime import date
 from ui.layout import setup_page
 from core.models import BalanceSheet, BalanceSheetLine, BusinessProfile
 from data.storage import save_model, load_model
+from data.pdf_export import balance_sheet_pdf
 
 def _ensure_profile() -> BusinessProfile | None:
     profile = st.session_state.get("business_profile")
@@ -53,6 +54,17 @@ def main():
         else:
             st.warning(f"Saved, but not balanced. Assets: {bs.total_assets:,.2f}, "
                        f"Liabilities + Equity: {(bs.total_liabilities + bs.total_equity):,.2f}")
+        from data.pdf_export import balance_sheet_pdf
+
+    if existing or "balance_sheet" in st.session_state:
+        bs_obj = existing or st.session_state["balance_sheet"]
+        pdf_bytes = balance_sheet_pdf(bs_obj)
+        st.download_button(
+            "Download Balance Sheet PDF",
+            data=pdf_bytes,
+            file_name=f"{bs_obj.business.legal_name.lower().replace(' ', '_')}_balance_sheet.pdf",
+            mime="application/pdf",
+        )
 
 if __name__ == "__main__":
     main()
